@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Tracker Kanban</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --bg: #f5f7fb;
+        --card: #ffffff;
+        --border: #dbe3f0;
+        --text: #203046;
+        --muted: #677489;
+        --accent: #2563eb;
+        --accent-soft: #dbeafe;
+        --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      .header {
+        margin-bottom: 24px;
+      }
+
+      .header h1 {
+        margin: 0 0 6px;
+        font-size: 1.8rem;
+      }
+
+      .header p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .board {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .column {
+        background: #eef2f8;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px;
+        min-height: 360px;
+      }
+
+      .column-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .column-header h2 {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 28px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: white;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      .task-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 10px;
+        box-shadow: var(--shadow);
+      }
+
+      .task-card h3 {
+        margin: 0 0 8px;
+        font-size: 1rem;
+      }
+
+      .task-card p {
+        margin: 0 0 10px;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .task-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .chip {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+
+      .chip.secondary {
+        background: #f3f4f6;
+        color: var(--text);
+      }
+
+      .chip.success {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .chip.warning {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      .filter-panel {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        margin-bottom: 16px;
+        padding: 14px;
+      }
+
+      .filter-controls {
+        display: grid;
+        grid-template-columns: minmax(180px, 2fr) repeat(3, minmax(140px, 1fr)) auto;
+        gap: 10px;
+        align-items: end;
+      }
+
+      .filter-field {
+        display: grid;
+        gap: 6px;
+      }
+
+      .filter-field span,
+      .filter-row label {
+        color: var(--muted);
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+
+      .filter-field input,
+      .filter-field select {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 9px 10px;
+        font: inherit;
+        background: white;
+      }
+
+      .filter-field input.filter-active,
+      .filter-field select.filter-active {
+        border-color: var(--accent);
+        background: #eff6ff;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+      }
+
+      .filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .filter-row label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .active-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .active-filter-chip {
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid var(--accent);
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        padding: 4px 8px;
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+
+      .task-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 10px;
+      }
+
+      .task-actions button {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 6px 8px;
+        background: var(--card);
+        cursor: pointer;
+        font: inherit;
+      }
+
+      .task-card.dragging {
+        opacity: 0.7;
+        transform: rotate(2deg);
+      }
+
+      .column.drag-over {
+        border-color: var(--accent);
+        background: #e8f0ff;
+      }
+
+      .status-banner {
+        grid-column: 1 / -1;
+        margin-bottom: 12px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: #fef2f2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .action-btn,
+      .secondary-btn,
+      .primary-btn {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 9px 12px;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .action-btn,
+      .primary-btn {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+      }
+
+      .secondary-btn {
+        background: var(--card);
+        color: var(--text);
+      }
+
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        z-index: 20;
+      }
+
+      .modal-overlay.hidden {
+        display: none;
+      }
+
+      .modal-card {
+        width: min(100%, 560px);
+        background: var(--card);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+        overflow: hidden;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 20px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .modal-header h2 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+
+      .modal-close-btn {
+        border: 0;
+        background: transparent;
+        font-size: 1.25rem;
+        cursor: pointer;
+        color: var(--muted);
+      }
+
+      .task-form {
+        padding: 20px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .field {
+        display: grid;
+        gap: 6px;
+      }
+
+      .field span {
+        font-weight: 600;
+      }
+
+      .field input,
+      .field textarea,
+      .field select {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 9px 10px;
+        font: inherit;
+      }
+
+      .field textarea {
+        min-height: 96px;
+        resize: vertical;
+      }
+
+      .field-error,
+      .form-error {
+        color: #b91c1c;
+        font-size: 0.9rem;
+      }
+
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      @media (max-width: 860px) {
+        .board {
+          grid-template-columns: 1fr;
+        }
+
+        .filter-controls {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="header">
+        <div>
+          <h1>Task Tracker Kanban</h1>
+          <p>A simple board for planning and tracking work.</p>
+        </div>
+        <button id="new-task-btn" class="action-btn" type="button">New Task</button>
+      </header>
+
+      <div class="filter-panel" aria-label="Task filters">
+        <div class="filter-controls">
+          <label class="filter-field">
+            <span>Search</span>
+            <input id="task-search-input" type="search" placeholder="Search title or description" />
+          </label>
+
+          <label class="filter-field">
+            <span>Status</span>
+            <select id="status-filter-select">
+              <option value="">All statuses</option>
+              <option value="ToDo">To Do</option>
+              <option value="InProgress">In Progress</option>
+              <option value="Done">Done</option>
+            </select>
+          </label>
+
+          <label class="filter-field">
+            <span>Priority</span>
+            <select id="priority-filter-select">
+              <option value="">All priorities</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </label>
+
+          <label class="filter-field">
+            <span>Assignee</span>
+            <select id="assignee-filter-select">
+              <option value="">All assignees</option>
+            </select>
+          </label>
+
+          <button id="clear-filters-btn" class="secondary-btn" type="button">Clear filters</button>
+        </div>
+
+        <div class="filter-row">
+          <div id="active-filters" class="active-filters" aria-live="polite"></div>
+          <label for="overdue-filter-toggle">
+            <input id="overdue-filter-toggle" type="checkbox" />
+            Show overdue only
+          </label>
+        </div>
+      </div>
+
+      <section id="board" class="board"></section>
+    </div>
+
+    <div id="task-modal-overlay" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-header">
+          <h2 id="modal-title">New Task</h2>
+          <button id="modal-close-btn" class="modal-close-btn" type="button" aria-label="Close">×</button>
+        </div>
+        <form id="task-form" class="task-form">
+          <div id="form-error" class="form-error" role="alert"></div>
+          <input id="task-id-input" type="hidden" name="taskId" />
+
+          <label class="field">
+            <span>Title</span>
+            <input id="title-input" name="title" type="text" />
+            <small id="title-error" class="field-error"></small>
+          </label>
+
+          <label class="field">
+            <span>Description</span>
+            <textarea id="description-input" name="description"></textarea>
+          </label>
+
+          <label class="field">
+            <span>Status</span>
+            <select id="status-input" name="status">
+              <option value="ToDo">To Do</option>
+              <option value="InProgress">In Progress</option>
+              <option value="Done">Done</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Priority</span>
+            <select id="priority-input" name="priority">
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Assignee</span>
+            <input id="assignee-input" name="assignee" type="text" />
+          </label>
+
+          <label class="field">
+            <span>Due date</span>
+            <input id="due-date-input" name="dueDate" type="date" />
+          </label>
+
+          <div class="modal-actions">
+            <button id="cancel-btn" class="secondary-btn" type="button">Cancel</button>
+            <button class="primary-btn" type="submit">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      const columns = [
+        { status: "ToDo", label: "To Do" },
+        { status: "InProgress", label: "In Progress" },
+        { status: "Done", label: "Done" },
+      ];
+
+      const board = document.getElementById("board");
+      const newTaskButton = document.getElementById("new-task-btn");
+      const modalOverlay = document.getElementById("task-modal-overlay");
+      const modalTitle = document.getElementById("modal-title");
+      const taskForm = document.getElementById("task-form");
+      const taskIdInput = document.getElementById("task-id-input");
+      const titleInput = document.getElementById("title-input");
+      const descriptionInput = document.getElementById("description-input");
+      const statusInput = document.getElementById("status-input");
+      const priorityInput = document.getElementById("priority-input");
+      const assigneeInput = document.getElementById("assignee-input");
+      const dueDateInput = document.getElementById("due-date-input");
+      const taskSearchInput = document.getElementById("task-search-input");
+      const statusFilterSelect = document.getElementById("status-filter-select");
+      const priorityFilterSelect = document.getElementById("priority-filter-select");
+      const assigneeFilterSelect = document.getElementById("assignee-filter-select");
+      const activeFilters = document.getElementById("active-filters");
+      const clearFiltersButton = document.getElementById("clear-filters-btn");
+      const overdueFilterToggle = document.getElementById("overdue-filter-toggle");
+      const formError = document.getElementById("form-error");
+      const titleError = document.getElementById("title-error");
+      const cancelButton = document.getElementById("cancel-btn");
+      const modalCloseButton = document.getElementById("modal-close-btn");
+      const apiBaseUrl = "http://127.0.0.1:8000";
+      let tasks = [];
+      let allTasks = [];
+      let draggedTaskId = null;
+      let dragErrorMessage = "";
+      let modalMode = "create";
+      let editingTask = null;
+      let searchDebounceTimer = null;
+
+      const priorityOrder = {
+        High: 0,
+        Medium: 1,
+        Low: 2,
+      };
+
+      const statusLabels = {
+        ToDo: "To Do",
+        InProgress: "In Progress",
+        Done: "Done",
+      };
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      function sortTasks(taskList) {
+        return [...taskList].sort((a, b) => {
+          const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+          if (priorityDiff !== 0) {
+            return priorityDiff;
+          }
+          return a.id.localeCompare(b.id);
+        });
+      }
+
+      function renderCard(task) {
+        const dueDateMarkup = task.due_date ? `<span class="chip secondary">Due ${escapeHtml(task.due_date)}</span>` : "";
+        const taskStateMarkup = task.task_state === "overdue"
+          ? '<span class="chip warning">Overdue</span>'
+          : task.task_state === "completed"
+            ? '<span class="chip success">Completed</span>'
+            : "";
+
+        return `
+          <article class="task-card" draggable="true" data-task-id="${escapeHtml(task.id)}">
+            <h3>${escapeHtml(task.title)}</h3>
+            <p>${escapeHtml(task.description || "")}</p>
+            <div class="task-meta">
+              <span class="chip">${escapeHtml(task.priority)}</span>
+              <span class="chip secondary">${escapeHtml(task.assignee || "Unassigned")}</span>
+              ${dueDateMarkup}
+              ${taskStateMarkup}
+            </div>
+            <div class="task-actions">
+              <button type="button" class="task-edit-btn">Edit</button>
+            </div>
+          </article>
+        `;
+      }
+
+      function getTaskById(taskId) {
+        return tasks.find((task) => task.id === taskId) ?? null;
+      }
+
+      function setDragError(message) {
+        dragErrorMessage = message;
+      }
+
+      function clearDragError() {
+        dragErrorMessage = "";
+      }
+
+      function clearModalErrors() {
+        formError.textContent = "";
+        titleError.textContent = "";
+      }
+
+      function setFormValues(task) {
+        titleInput.value = task.title || "";
+        descriptionInput.value = task.description || "";
+        statusInput.value = task.status || "ToDo";
+        priorityInput.value = task.priority || "Medium";
+        assigneeInput.value = task.assignee || "";
+        dueDateInput.value = task.due_date || "";
+        taskIdInput.value = task.id || "";
+      }
+
+      function getFilterValues() {
+        return {
+          q: taskSearchInput.value.trim(),
+          status: statusFilterSelect.value,
+          priority: priorityFilterSelect.value,
+          assignee: assigneeFilterSelect.value,
+        };
+      }
+
+      function hasActiveFilters() {
+        const filters = getFilterValues();
+        return Boolean(filters.q || filters.status || filters.priority || filters.assignee || overdueFilterToggle.checked);
+      }
+
+      function buildTaskQueryParams() {
+        const filters = getFilterValues();
+        const params = new URLSearchParams();
+
+        if (filters.q) {
+          params.set("q", filters.q);
+        }
+
+        if (filters.status) {
+          params.set("status", filters.status);
+        }
+
+        if (filters.priority) {
+          params.set("priority", filters.priority);
+        }
+
+        if (filters.assignee) {
+          params.set("assignee", filters.assignee);
+        }
+
+        if (overdueFilterToggle.checked) {
+          params.set("overdue", "true");
+        }
+
+        const queryString = params.toString();
+        return queryString ? `?${queryString}` : "";
+      }
+
+      function populateAssigneeFilter(taskList) {
+        const currentAssignee = assigneeFilterSelect.value;
+        const assignees = [...new Set(taskList.map((task) => task.assignee).filter(Boolean))]
+          .sort((first, second) => first.localeCompare(second));
+
+        assigneeFilterSelect.innerHTML = '<option value="">All assignees</option>';
+        assignees.forEach((assignee) => {
+          const option = document.createElement("option");
+          option.value = assignee;
+          option.textContent = assignee;
+          assigneeFilterSelect.append(option);
+        });
+
+        assigneeFilterSelect.value = assignees.includes(currentAssignee) ? currentAssignee : "";
+      }
+
+      function updateFilterIndicators() {
+        const filters = getFilterValues();
+        taskSearchInput.classList.toggle("filter-active", Boolean(filters.q));
+        statusFilterSelect.classList.toggle("filter-active", Boolean(filters.status));
+        priorityFilterSelect.classList.toggle("filter-active", Boolean(filters.priority));
+        assigneeFilterSelect.classList.toggle("filter-active", Boolean(filters.assignee));
+
+        const chips = [];
+        if (filters.q) {
+          chips.push(`Search: ${filters.q}`);
+        }
+        if (filters.status) {
+          chips.push(`Status: ${statusLabels[filters.status] || filters.status}`);
+        }
+        if (filters.priority) {
+          chips.push(`Priority: ${filters.priority}`);
+        }
+        if (filters.assignee) {
+          chips.push(`Assignee: ${filters.assignee}`);
+        }
+        if (overdueFilterToggle.checked) {
+          chips.push("Overdue only");
+        }
+
+        activeFilters.innerHTML = chips
+          .map((label) => `<span class="active-filter-chip">${escapeHtml(label)}</span>`)
+          .join("");
+        clearFiltersButton.disabled = !hasActiveFilters();
+      }
+
+      function scheduleFetchTasks() {
+        window.clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = window.setTimeout(fetchTasks, 300);
+        updateFilterIndicators();
+      }
+
+      async function refreshFullTaskList() {
+        const response = await fetch(`${apiBaseUrl}/tasks`);
+        if (!response.ok) {
+          throw new Error("Unable to load tasks");
+        }
+
+        allTasks = await response.json();
+        populateAssigneeFilter(allTasks);
+      }
+
+      async function clearFilters() {
+        taskSearchInput.value = "";
+        statusFilterSelect.value = "";
+        priorityFilterSelect.value = "";
+        assigneeFilterSelect.value = "";
+        overdueFilterToggle.checked = false;
+        clearDragError();
+        renderBoard(tasks, "loading");
+
+        try {
+          await refreshFullTaskList();
+          tasks = allTasks;
+          updateFilterIndicators();
+          renderBoard(tasks, tasks.length === 0 ? "empty" : "ready");
+        } catch (error) {
+          console.error(error);
+          updateFilterIndicators();
+          renderBoard(tasks, "error");
+        }
+      }
+
+      function openCreateModal() {
+        modalMode = "create";
+        editingTask = null;
+        clearModalErrors();
+        setFormValues({ title: "", description: "", status: "ToDo", priority: "Medium", assignee: "", due_date: "", id: "" });
+        modalTitle.textContent = "New Task";
+        modalOverlay.classList.remove("hidden");
+        modalOverlay.setAttribute("aria-hidden", "false");
+        titleInput.focus();
+      }
+
+      function openEditModal(task) {
+        modalMode = "edit";
+        editingTask = task;
+        clearModalErrors();
+        setFormValues({
+          title: task.title || "",
+          description: task.description || "",
+          status: task.status || "ToDo",
+          priority: task.priority || "Medium",
+          assignee: task.assignee || "",
+          due_date: task.due_date || "",
+          id: task.id || "",
+        });
+        modalTitle.textContent = "Edit Task";
+        modalOverlay.classList.remove("hidden");
+        modalOverlay.setAttribute("aria-hidden", "false");
+        titleInput.focus();
+      }
+
+      function closeModal() {
+        modalOverlay.classList.add("hidden");
+        modalOverlay.setAttribute("aria-hidden", "true");
+        clearModalErrors();
+        taskForm.reset();
+        modalMode = "create";
+        editingTask = null;
+        setFormValues({ title: "", description: "", status: "ToDo", priority: "Medium", assignee: "", due_date: "", id: "" });
+      }
+
+      function getServerMessage(detail) {
+        if (!detail) {
+          return "";
+        }
+
+        if (typeof detail.detail === "string") {
+          return detail.detail;
+        }
+
+        if (Array.isArray(detail.detail)) {
+          return detail.detail
+            .map((item) => {
+              if (typeof item === "string") {
+                return item;
+              }
+              return item?.msg || "";
+            })
+            .filter(Boolean)
+            .join(" ");
+        }
+
+        if (detail.detail && typeof detail.detail === "object") {
+          return Object.values(detail.detail).join(" ");
+        }
+
+        return "";
+      }
+
+      function attachDragHandlers() {
+        board.querySelectorAll(".task-card").forEach((card) => {
+          card.addEventListener("dragstart", handleDragStart);
+          card.addEventListener("dragend", handleDragEnd);
+        });
+
+        board.querySelectorAll(".column").forEach((column) => {
+          column.addEventListener("dragover", handleDragOver);
+          column.addEventListener("dragleave", handleDragLeave);
+          column.addEventListener("drop", handleDrop);
+        });
+      }
+
+      function handleDragStart(event) {
+        const taskId = event.currentTarget.dataset.taskId;
+        if (!taskId) {
+          return;
+        }
+
+        draggedTaskId = taskId;
+        event.dataTransfer?.setData("text/plain", taskId);
+        event.dataTransfer.effectAllowed = "move";
+        event.currentTarget.classList.add("dragging");
+      }
+
+      function handleDragEnd(event) {
+        event.currentTarget.classList.remove("dragging");
+        board.querySelectorAll(".column").forEach((column) => column.classList.remove("drag-over"));
+      }
+
+      function handleDragOver(event) {
+        if (!draggedTaskId) {
+          return;
+        }
+
+        event.preventDefault();
+        event.currentTarget.classList.add("drag-over");
+        event.dataTransfer.dropEffect = "move";
+      }
+
+      function handleDragLeave(event) {
+        if (event.currentTarget.contains(event.relatedTarget)) {
+          return;
+        }
+
+        event.currentTarget.classList.remove("drag-over");
+      }
+
+      function handleDrop(event) {
+        const column = event.currentTarget;
+        const targetStatus = column.dataset.status;
+
+        event.preventDefault();
+        column.classList.remove("drag-over");
+
+        if (!draggedTaskId) {
+          return;
+        }
+
+        const task = getTaskById(draggedTaskId);
+        if (!task || task.status === targetStatus) {
+          draggedTaskId = null;
+          return;
+        }
+
+        const previousStatus = task.status;
+        tasks = tasks.map((item) => (item.id === task.id ? { ...item, status: targetStatus } : item));
+        clearDragError();
+        renderBoard(tasks, "ready");
+        moveTask(task.id, targetStatus, previousStatus);
+        draggedTaskId = null;
+      }
+
+      async function moveTask(taskId, targetStatus, previousStatus) {
+        try {
+          const response = await fetch(`${apiBaseUrl}/tasks/${taskId}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ status: targetStatus }),
+          });
+
+          if (!response.ok) {
+            tasks = tasks.map((task) => (task.id === taskId ? { ...task, status: previousStatus } : task));
+            const detail = await response.json().catch(() => null);
+            const message = detail?.detail
+              ? (Array.isArray(detail.detail) ? detail.detail.map((item) => item.msg || item).join(", ") : detail.detail)
+              : "The server rejected the task move.";
+            setDragError(message);
+            renderBoard(tasks, "ready");
+            return;
+          }
+
+          const updatedTask = await response.json().catch(() => null);
+          if (updatedTask) {
+            tasks = tasks.map((task) => (task.id === taskId ? updatedTask : task));
+            allTasks = allTasks.map((task) => (task.id === taskId ? updatedTask : task));
+            populateAssigneeFilter(allTasks);
+          }
+
+          clearDragError();
+          await fetchTasks();
+        } catch (error) {
+          tasks = tasks.map((task) => (task.id === taskId ? { ...task, status: previousStatus } : task));
+          setDragError("Unable to update the task right now. Please try again.");
+          renderBoard(tasks, "ready");
+        }
+      }
+
+      function handleBoardClick(event) {
+        const editButton = event.target.closest(".task-edit-btn");
+        if (!editButton) {
+          return;
+        }
+
+        const taskCard = editButton.closest(".task-card");
+        const taskId = taskCard?.dataset.taskId;
+        if (!taskId) {
+          return;
+        }
+
+        const task = getTaskById(taskId);
+        if (task) {
+          openEditModal(task);
+        }
+      }
+
+      async function submitTask(event) {
+        event.preventDefault();
+        clearModalErrors();
+
+        const title = titleInput.value.trim();
+        if (!title) {
+          titleError.textContent = "Title is required";
+          titleInput.focus();
+          return;
+        }
+
+        const payload = {
+          title,
+          description: descriptionInput.value,
+          priority: priorityInput.value,
+          assignee: assigneeInput.value.trim() ? assigneeInput.value.trim() : null,
+        };
+
+        const dueDateValue = dueDateInput.value.trim();
+        if (dueDateValue) {
+          payload.due_date = dueDateValue;
+        } else if (modalMode === "edit") {
+          payload.due_date = null;
+        }
+
+        if (modalMode === "create") {
+          payload.status = statusInput.value;
+        } else if (editingTask && statusInput.value !== editingTask.status) {
+          payload.status = statusInput.value;
+        }
+
+        const isEdit = modalMode === "edit";
+        const url = isEdit ? `${apiBaseUrl}/tasks/${taskIdInput.value}` : `${apiBaseUrl}/tasks`;
+        const method = isEdit ? "PATCH" : "POST";
+
+        try {
+          const response = await fetch(url, {
+            method,
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (response.ok) {
+            closeModal();
+            clearDragError();
+            await refreshFullTaskList();
+            await fetchTasks();
+            return;
+          }
+
+          const detail = await response.json().catch(() => null);
+          if (response.status === 422) {
+            const message = getServerMessage(detail);
+            const items = Array.isArray(detail?.detail) ? detail.detail : [];
+
+            if (message) {
+              formError.textContent = message;
+            }
+
+            items.forEach((item) => {
+              const location = Array.isArray(item?.loc) ? item.loc[item.loc.length - 1] : null;
+              if (location === "title") {
+                titleError.textContent = item.msg || "Title is required";
+              }
+            });
+            return;
+          }
+
+          formError.textContent = getServerMessage(detail) || "Unable to save task right now.";
+        } catch (error) {
+          formError.textContent = "Unable to save task right now.";
+        }
+      }
+
+      function renderBoard(taskList, state = "ready") {
+        const emptyStateMarkup = '<div class="task-card"><p>No tasks in this column yet.</p></div>';
+        const bannerMarkup = dragErrorMessage
+          ? `<div class="status-banner">${escapeHtml(dragErrorMessage)}</div>`
+          : "";
+
+        if (state === "loading") {
+          board.innerHTML = `
+            ${bannerMarkup}
+            <div class="column" data-status="${columns[0].status}">
+              <div class="column-header"><h2>${columns[0].label}</h2><span class="pill">0</span></div>
+              <div class="task-card"><p>Loading tasks…</p></div>
+            </div>
+            <div class="column" data-status="${columns[1].status}">
+              <div class="column-header"><h2>${columns[1].label}</h2><span class="pill">0</span></div>
+              <div class="task-card"><p>Loading tasks…</p></div>
+            </div>
+            <div class="column" data-status="${columns[2].status}">
+              <div class="column-header"><h2>${columns[2].label}</h2><span class="pill">0</span></div>
+              <div class="task-card"><p>Loading tasks…</p></div>
+            </div>
+          `;
+          return;
+        }
+
+        if (state === "empty") {
+          board.innerHTML = `
+            ${bannerMarkup}
+            <div class="column" data-status="${columns[0].status}">
+              <div class="column-header"><h2>${columns[0].label}</h2><span class="pill">0</span></div>
+              <div class="task-card"><p>No tasks in this column yet.</p></div>
+            </div>
+            <div class="column" data-status="${columns[1].status}">
+              <div class="column-header"><h2>${columns[1].label}</h2><span class="pill">0</span></div>
+              <div class="task-card"><p>No tasks in this column yet.</p></div>
+            </div>
+            <div class="column" data-status="${columns[2].status}">
+              <div class="column-header"><h2>${columns[2].label}</h2><span class="pill">0</span></div>
+              <div class="task-card"><p>No tasks in this column yet.</p></div>
+            </div>
+          `;
+          attachDragHandlers();
+          return;
+        }
+
+        board.innerHTML = `
+          ${bannerMarkup}
+          <div class="column" data-status="${columns[0].status}">
+            <div class="column-header">
+              <h2>${columns[0].label}</h2>
+              <span class="pill">${sortTasks(taskList.filter((task) => task.status === columns[0].status)).length}</span>
+            </div>
+            ${sortTasks(taskList.filter((task) => task.status === columns[0].status)).map(renderCard).join("") || emptyStateMarkup}
+          </div>
+          <div class="column" data-status="${columns[1].status}">
+            <div class="column-header">
+              <h2>${columns[1].label}</h2>
+              <span class="pill">${sortTasks(taskList.filter((task) => task.status === columns[1].status)).length}</span>
+            </div>
+            ${sortTasks(taskList.filter((task) => task.status === columns[1].status)).map(renderCard).join("") || emptyStateMarkup}
+          </div>
+          <div class="column" data-status="${columns[2].status}">
+            <div class="column-header">
+              <h2>${columns[2].label}</h2>
+              <span class="pill">${sortTasks(taskList.filter((task) => task.status === columns[2].status)).length}</span>
+            </div>
+            ${sortTasks(taskList.filter((task) => task.status === columns[2].status)).map(renderCard).join("") || emptyStateMarkup}
+          </div>
+        `;
+
+        if (state === "error") {
+          board.innerHTML = `
+            ${bannerMarkup}
+            <div class="column" data-status="error" style="grid-column: 1 / -1; min-height: auto;">
+              <div class="column-header"><h2>Tasks</h2></div>
+              <div class="task-card">
+                <p>Unable to load tasks.</p>
+                <div class="task-actions">
+                  <button type="button" id="retry-btn">Retry</button>
+                </div>
+              </div>
+            </div>
+          `;
+          document.getElementById("retry-btn")?.addEventListener("click", fetchTasks);
+          return;
+        }
+
+        attachDragHandlers();
+      }
+
+      async function fetchTasks() {
+        clearDragError();
+        updateFilterIndicators();
+        renderBoard(tasks, "loading");
+
+        try {
+          const params = buildTaskQueryParams();
+          const response = await fetch(`${apiBaseUrl}/tasks${params}`);
+          if (!response.ok) {
+            throw new Error("Unable to load tasks");
+          }
+          tasks = await response.json();
+
+          if (tasks.length === 0) {
+            renderBoard(tasks, "empty");
+          } else {
+            renderBoard(tasks, "ready");
+          }
+        } catch (error) {
+          console.error(error);
+          renderBoard(tasks, "error");
+        }
+      }
+
+      async function initializeTasks() {
+        clearDragError();
+        updateFilterIndicators();
+        renderBoard(tasks, "loading");
+
+        try {
+          await refreshFullTaskList();
+          tasks = allTasks;
+          updateFilterIndicators();
+          renderBoard(tasks, tasks.length === 0 ? "empty" : "ready");
+        } catch (error) {
+          console.error(error);
+          renderBoard(tasks, "error");
+        }
+      }
+
+      newTaskButton.addEventListener("click", openCreateModal);
+      taskSearchInput.addEventListener("input", scheduleFetchTasks);
+      statusFilterSelect.addEventListener("change", fetchTasks);
+      priorityFilterSelect.addEventListener("change", fetchTasks);
+      assigneeFilterSelect.addEventListener("change", fetchTasks);
+      clearFiltersButton.addEventListener("click", clearFilters);
+      overdueFilterToggle.addEventListener("change", fetchTasks);
+      cancelButton.addEventListener("click", closeModal);
+      modalCloseButton.addEventListener("click", closeModal);
+      taskForm.addEventListener("submit", submitTask);
+      board.addEventListener("click", handleBoardClick);
+      modalOverlay.addEventListener("click", (event) => {
+        if (event.target === modalOverlay) {
+          closeModal();
+        }
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !modalOverlay.classList.contains("hidden")) {
+          closeModal();
+        }
+      });
+
+      initializeTasks();
+    </script>
+  </body>
+</html>
