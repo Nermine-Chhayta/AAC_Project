@@ -8,6 +8,14 @@ _tasks: dict[str, TaskResponse] = {}
 
 
 def add_task(payload: TaskCreate) -> TaskResponse:
+    """Add a new task to in-memory storage.
+
+    Args:
+        payload: The validated task creation payload.
+
+    Returns:
+        TaskResponse: The stored task object with generated metadata.
+    """
     now = datetime.now(timezone.utc)
     task_id = str(uuid4())
     task = TaskResponse(
@@ -27,6 +35,18 @@ def add_task(payload: TaskCreate) -> TaskResponse:
 
 
 def get_all_tasks(q=None, status=None, priority=None, assignee=None, overdue=None) -> list[TaskResponse]:
+    """Return all tasks matching the provided filters.
+
+    Args:
+        q: Optional search text for title and description.
+        status: Optional task status to filter by.
+        priority: Optional task priority to filter by.
+        assignee: Optional assignee name to filter by exact match.
+        overdue: Optional boolean to filter overdue state.
+
+    Returns:
+        list[TaskResponse]: All matching tasks.
+    """
     tasks = list(_tasks.values())
     search_text = q.strip().casefold() if q is not None else None
     assignee_text = assignee.strip().casefold() if assignee is not None else None
@@ -54,10 +74,27 @@ def get_all_tasks(q=None, status=None, priority=None, assignee=None, overdue=Non
 
 
 def get_task_by_id(task_id: str) -> Optional[TaskResponse]:
+    """Fetch a task by its identifier.
+
+    Args:
+        task_id: The UUID string of the task.
+
+    Returns:
+        Optional[TaskResponse]: The task if found, otherwise None.
+    """
     return _tasks.get(task_id)
 
 
 def update_task(task_id: str, payload: TaskUpdate) -> Optional[TaskResponse]:
+    """Update an existing stored task with new values.
+
+    Args:
+        task_id: The UUID string of the task to update.
+        payload: The partial task fields to update.
+
+    Returns:
+        Optional[TaskResponse]: The updated task if it exists, otherwise None.
+    """
     task = _tasks.get(task_id)
 
     if task is None:
@@ -84,6 +121,14 @@ def update_task(task_id: str, payload: TaskUpdate) -> Optional[TaskResponse]:
 
 
 def delete_task(task_id: str) -> bool:
+    """Remove a task from in-memory storage.
+
+    Args:
+        task_id: The UUID string of the task to delete.
+
+    Returns:
+        bool: True if the task was deleted, False if it did not exist.
+    """
     if task_id in _tasks:
         del _tasks[task_id]
         return True

@@ -50,6 +50,14 @@ class TaskCreate(BaseModel):
     @field_validator("title")
     @classmethod
     def validate_title(cls, value: str) -> str:
+        """Validate the task title for create requests.
+
+        Args:
+            value: The raw title string provided by the client.
+
+        Returns:
+            str: The normalized title string.
+        """
         return _validate_title(value)
 
 
@@ -66,6 +74,14 @@ class TaskUpdate(BaseModel):
     @field_validator("title")
     @classmethod
     def validate_title(cls, value: Optional[str]) -> Optional[str]:
+        """Validate the task title for partial update requests.
+
+        Args:
+            value: The raw title string provided by the client, or None.
+
+        Returns:
+            Optional[str]: The normalized title string, or None when unset.
+        """
         if value is None:
             return value
         return _validate_title(value)

@@ -11,6 +11,21 @@ VALID_TRANSITIONS: frozenset[tuple[TaskStatus, TaskStatus]] = frozenset({
 
 
 def validate_status_transition(current: TaskStatus, new: TaskStatus) -> None:
+    """Validate whether a task status update is permitted.
+
+    Args:
+        current: The current status of the task.
+        new: The requested new status for the task.
+
+    Returns:
+        None
+
+    Raises:
+        HTTPException: If the transition is not allowed by the configured rules.
+
+    Example:
+        validate_status_transition(TaskStatus.TODO, TaskStatus.IN_PROGRESS)
+    """
     if current == new:
         return
 
