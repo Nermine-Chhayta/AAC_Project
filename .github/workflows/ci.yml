@@ -28,3 +28,18 @@ jobs:
 
       - name: Run tests
         run: python -m pytest -v
+
+      - name: Build Docker image
+        run: docker build -t task-tracker .
+
+      - name: Run Docker container and verify /health
+        run: |
+          docker run -d --rm --name task-tracker -p 8000:8000 task-tracker
+          for i in $(seq 1 12); do
+            if curl --fail --silent http://127.0.0.1:8000/health; then
+              break
+            fi
+            sleep 2
+          done
+          curl --fail http://127.0.0.1:8000/health | grep '"status":"ok"'
+          docker stop task-tracker

@@ -58,6 +58,9 @@ Expected response:
 
 ## Final Project
 
+This submission is based on the `final-project` baseline branch and preserves existing Task Tracker app behavior.
+No new product feature was added; verification and release readiness were the only changes.
+
 ### Verified commands
 
 Start the backend API:
@@ -82,15 +85,27 @@ docker build -t task-tracker .
 
 Run the Docker container:
 ```bash
-docker run --rm -p 8000:8000 task-tracker
+docker run -d --rm -p 8000:8000 --name task-tracker task-tracker
 ```
 
-Verify /health from the container:
+Verify `/health` from the running container:
 ```bash
 curl http://127.0.0.1:8000/health
 ```
 
+Stop the container:
+```bash
+docker stop task-tracker
+```
+
+### Release readiness
+
+- CI verifies tests with `python -m pytest -v`.
+- CI also builds the Docker image and verifies the running service health endpoint.
+- The Dockerfile uses a non-root `app` user and avoids copying local `.env` files into the image.
+- `.dockerignore` excludes environment files, Git metadata, virtual environments, and common temporary artifacts.
+
 ### Notes
 
-- CI uses Python 3.11 and installs dependencies with `python -m pip install --no-cache-dir -r requirements.txt`.
-- The Dockerfile creates a non-root `app` user and does not copy local `.env` files into the image.
+- CI uses Python 3.11.
+- The app is served by `uvicorn` on port `8000`.

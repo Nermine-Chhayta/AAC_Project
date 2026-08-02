@@ -66,3 +66,10 @@ curl http://127.0.0.1:8000/health
 - `pytest.ini` configures `pythonpath = .` and `testpaths = tests`.
 - The repository includes `.env.example` at the root.
 - Dockerfile is configured to use a non-root `app` user.
+
+## Security and AI review
+
+- Security guardrails are in place to avoid unexpected app logic changes.
+- No new product feature was added; updates are limited to verification and documentation.
+- AI assistance was used for documentation, CI, and release evidence improvements only.
+- See `docs/final-ai-review.md` for the final AI review, ownership statement, and graded findings.
