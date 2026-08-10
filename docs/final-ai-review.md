@@ -3,6 +3,11 @@
 ## AI Ownership Statement
 I used AI as an assistant for planning, documentation, and ensuring release readiness. I retained ownership of all code changes, verified every result manually, and only accepted AI output after confirming it against tests and app behavior.
 
+## AI assistance summary
+- AI was used to draft and refine the project documentation, GitHub workflow review notes, and final delivery evidence.
+- AI support was limited to release-readiness tasks and documentation; it did not add new product features or alter runtime behavior.
+- All generated output was checked against actual repository state, local test execution, and Docker health validation before acceptance.
+
 ## Graded Findings
 
 1. CI Coverage: Passed

@@ -6,6 +6,12 @@
 - No new product feature was added; the app behavior is preserved.
 - Changes are limited to CI, Docker release validation, documentation, and AI review evidence.
 
+## Evidence files
+- `README.md`
+- `docs/release-evidence.md`
+- `docs/final-ai-review.md`
+- `docs/ai-playbook.md`
+
 ## Verified commands
 
 - Start backend API:

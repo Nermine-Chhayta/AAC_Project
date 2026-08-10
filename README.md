@@ -58,7 +58,18 @@ Expected response:
 
 ## Final Project
 
-This submission is based on the `final-project` baseline branch and preserves existing Task Tracker app behavior.
+- Branch: `final-project`
+- Evidence files:
+  - `README.md`
+  - `docs/release-evidence.md`
+  - `docs/final-ai-review.md`
+  - `docs/ai-playbook.md`
+- AI assistance summary:
+  - AI was used to help plan documentation, confirm release-readiness steps, and draft evidence summaries.
+  - All AI-generated content was manually reviewed, validated against the running app, and limited to verification and documentation work.
+  - No product feature changes were introduced; the app behavior was preserved.
+
+This submission is based on the `final-project` branch and preserves the existing Task Tracker app behavior.
 No new product feature was added; verification and release readiness were the only changes.
 
 ### Verified commands
