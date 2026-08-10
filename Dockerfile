@@ -4,16 +4,18 @@ WORKDIR /app
 COPY requirements.txt .
 
 RUN python -m pip install --upgrade pip setuptools wheel \
-    && pip install --no-cache-dir -r requirements.txt
+    && python -m pip install --no-cache-dir -r requirements.txt
 
 FROM python:3.11-slim
 
 RUN adduser --disabled-password --gecos "" app
 WORKDIR /app
+ENV PYTHONUNBUFFERED=1
 
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 COPY app ./app
+COPY frontend ./frontend
 COPY requirements.txt .
 
 EXPOSE 8000
